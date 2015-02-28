@@ -67,7 +67,6 @@ public class MyActivity extends FragmentActivity
 
     @Override
     public void onMapReady(GoogleMap map) {
-        mapReady = true;
         myMap = map;
     }
 
