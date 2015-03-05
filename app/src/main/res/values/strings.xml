@@ -4,6 +4,7 @@
     <string name="app_name">Homework2</string>
     <string name="hello_world">Hello world!</string>
     <string name="edit_location">1510 Colby Lane, Cedar Park, TX</string>
+    <string name="edit_location_auto">1510 Colby Lane, Cedar Park, TX</string>
     <string name="button_send">Go</string>
     <string name="action_settings">Settings</string>
 

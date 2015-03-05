@@ -1,12 +1,22 @@
 package com.philliplemons.homework2;
 
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.AutoCompleteTextView;
+import android.widget.Filter;
+import android.widget.Filterable;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,6 +38,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MyActivity extends FragmentActivity
@@ -41,6 +53,9 @@ public class MyActivity extends FragmentActivity
         setContentView(R.layout.activity_my);
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        AutoCompleteTextView editTextAddress = (AutoCompleteTextView)findViewById(R.id.edit_location_auto);
+        editTextAddress.setAdapter(new AutoCompleteAdapter(this));
+
     }
 
     @Override
@@ -71,13 +86,98 @@ public class MyActivity extends FragmentActivity
     }
 
     public void goToLoc(View view) {
-        EditText editText = (EditText) findViewById(R.id.edit_location);
-        String loc = editText.getText().toString();
+        //EditText editText = (EditText) findViewById(R.id.edit_location);
+        //String loc = editText.getText().toString();
+        AutoCompleteTextView editTextAddress = (AutoCompleteTextView)findViewById(R.id.edit_location_auto);
+        String loc = editTextAddress.getText().toString();
         System.out.println("Location: " + loc);
         loc = loc.replace(" ", "%20");
         new getLatLngTask().execute(loc);
         //myMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(33.0, -97.89), 5));
         //System.out.println("Lat, Lng: " + getLatLongFromAddress(loc));
+    }
+
+    private class AutoCompleteAdapter extends ArrayAdapter<Address> implements Filterable {
+    /// Used code from an android resource helping with auto complete. http://android.foxykeep.com/dev/how-to-add-autocompletion-to-an-edittext
+        private LayoutInflater mInflater;
+        private Geocoder mGeocoder;
+        private StringBuilder mSb = new StringBuilder();
+
+        public AutoCompleteAdapter(final Context context) {
+            super(context, -1);
+            mInflater = LayoutInflater.from(context);
+            mGeocoder = new Geocoder(context);
+        }
+
+        @Override
+        public View getView(final int position, final View convertView, final ViewGroup parent) {
+            final TextView tv;
+            if (convertView != null) {
+                tv = (TextView) convertView;
+            } else {
+                tv = (TextView) mInflater.inflate(android.R.layout.simple_dropdown_item_1line, parent, false);
+            }
+
+            tv.setText(createFormattedAddressFromAddress(getItem(position)));
+            return tv;
+        }
+
+        private String createFormattedAddressFromAddress(final Address address) {
+            mSb.setLength(0);
+            final int addressLineSize = address.getMaxAddressLineIndex();
+            for (int i = 0; i < addressLineSize; i++) {
+                mSb.append(address.getAddressLine(i));
+                if (i != addressLineSize - 1) {
+                    mSb.append(", ");
+                }
+            }
+            return mSb.toString();
+        }
+
+        @Override
+        public Filter getFilter() {
+            Filter myFilter = new Filter() {
+                @Override
+                protected FilterResults performFiltering(final CharSequence constraint) {
+                    List<Address> addressList = null;
+                    if (constraint != null) {
+                        try {
+                            addressList = mGeocoder.getFromLocationName((String) constraint, 5);
+                        } catch (IOException e) {
+                        }
+                    }
+                    if (addressList == null) {
+                        addressList = new ArrayList<Address>();
+                    }
+
+                    final FilterResults filterResults = new FilterResults();
+                    filterResults.values = addressList;
+                    filterResults.count = addressList.size();
+
+                    return filterResults;
+                }
+
+                @SuppressWarnings("unchecked")
+                @Override
+                protected void publishResults(final CharSequence contraint, final Filter.FilterResults results) {
+                    clear();
+                    for (Address address : (List<Address>) results.values) {
+                        add(address);
+                    }
+                    if (results.count > 0) {
+                        notifyDataSetChanged();
+                    } else {
+                        notifyDataSetInvalidated();
+                    }
+                }
+
+                @Override
+                public CharSequence convertResultToString(final Object resultValue) {
+                    return resultValue == null ? "" : ((Address) resultValue).getAddressLine(0) + " , " + ((Address) resultValue).getAddressLine(1);
+                }
+            };
+            return myFilter;
+        }
     }
 
     private class getLatLngTask extends AsyncTask<String, Void, LatLng> {
