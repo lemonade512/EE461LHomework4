@@ -173,7 +173,7 @@ public class MyActivity extends FragmentActivity
 
                 @Override
                 public CharSequence convertResultToString(final Object resultValue) {
-                    return resultValue == null ? "" : ((Address) resultValue).getAddressLine(0) + " , " + ((Address) resultValue).getAddressLine(1);
+                    return resultValue == null ? "" : ((Address) resultValue).getAddressLine(0) + ", " + ((Address) resultValue).getAddressLine(1);
                 }
             };
             return myFilter;
